@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-var m sync.Mutex
-
 // Generator генерирует последовательность чисел 1,2,3 и т.д. и
 // отправляет их в канал ch. При этом после записи в канал для каждого числа
 // вызывается функция fn. Она служит для подсчёта количества и суммы
@@ -41,6 +39,7 @@ func Worker(in <-chan int64, out chan<- int64) {
 }
 
 func main() {
+	var m sync.Mutex
 	chIn := make(chan int64)
 
 	// 3. Создание контекста
@@ -53,6 +52,10 @@ func main() {
 
 	// генерируем числа, считая параллельно их количество и сумму
 	go Generator(ctx, chIn, func(i int64) {
+
+		m.Lock()
+		defer m.Unlock()
+
 		inputSum += i
 		inputCount++
 	})
@@ -100,7 +103,6 @@ func main() {
 	var sum int64   // сумма чисел результирующего канала
 
 	// 5. Читаем числа из результирующего канала
-
 	for v := range chOut {
 
 		sum += v
